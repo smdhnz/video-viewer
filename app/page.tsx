@@ -1,19 +1,109 @@
-import { Button } from "@/components/ui/button"
+"use client"
+
+import { useCallback, useEffect, useRef, useState } from "react"
+
+import { Playlist } from "@/components/playlist"
+import { VideoPlayer } from "@/components/video-player"
+import type { PlaylistItem } from "@/types/playlist"
 
 export default function Page() {
+  const [playlistItems, setPlaylistItems] = useState<PlaylistItem[]>([])
+  const [currentItem, setCurrentItem] = useState<PlaylistItem | null>(null)
+  const playlistItemsRef = useRef(playlistItems)
+  const prevPlaylistLengthRef = useRef(playlistItems.length)
+
+  useEffect(() => {
+    playlistItemsRef.current = playlistItems
+  }, [playlistItems])
+
+  useEffect(() => {
+    return () => {
+      playlistItemsRef.current.forEach((item) => {
+        if (item.url.startsWith("blob:")) {
+          URL.revokeObjectURL(item.url)
+        }
+      })
+    }
+  }, [])
+
+  const handleItemClick = useCallback((item: PlaylistItem) => {
+    setCurrentItem(item)
+  }, [])
+
+  const handleRemoveItem = useCallback(
+    (id: string) => {
+      const itemToRemove = playlistItems.find((item) => item.id === id)
+      if (!itemToRemove) return
+
+      const nextPlaylist = playlistItems.filter((item) => item.id !== id)
+
+      if (currentItem?.id === id) {
+        if (nextPlaylist.length === 0) {
+          setCurrentItem(null)
+        } else {
+          const currentIndex = playlistItems.findIndex((item) => item.id === id)
+          const nextIndex = Math.min(currentIndex, nextPlaylist.length - 1)
+          setCurrentItem(nextPlaylist[nextIndex] ?? null)
+        }
+      }
+
+      if (itemToRemove.url.startsWith("blob:")) {
+        URL.revokeObjectURL(itemToRemove.url)
+      }
+
+      setPlaylistItems(nextPlaylist)
+    },
+    [currentItem?.id, playlistItems]
+  )
+
+  const playNext = useCallback(() => {
+    if (playlistItems.length < 2) return
+
+    const currentIndex = playlistItems.findIndex(
+      (item) => item.id === currentItem?.id
+    )
+    const nextIndex = (currentIndex + 1) % playlistItems.length
+    setCurrentItem(playlistItems[nextIndex] ?? null)
+  }, [currentItem?.id, playlistItems])
+
+  const playPrev = useCallback(() => {
+    if (playlistItems.length < 2) return
+
+    const currentIndex = playlistItems.findIndex(
+      (item) => item.id === currentItem?.id
+    )
+    const prevIndex =
+      (currentIndex - 1 + playlistItems.length) % playlistItems.length
+    setCurrentItem(playlistItems[prevIndex] ?? null)
+  }, [currentItem?.id, playlistItems])
+
+  useEffect(() => {
+    const prevLength = prevPlaylistLengthRef.current
+    if (prevLength === 0 && playlistItems.length > 0) {
+      setCurrentItem(playlistItems[0] ?? null)
+    }
+    prevPlaylistLengthRef.current = playlistItems.length
+  }, [playlistItems])
+
   return (
-    <div className="flex min-h-svh p-6">
-      <div className="flex max-w-md min-w-0 flex-col gap-4 text-sm leading-loose">
-        <div>
-          <h1 className="font-medium">Project ready!</h1>
-          <p>You may now add components and start building.</p>
-          <p>We&apos;ve already added the button component for you.</p>
-          <Button className="mt-2">Button</Button>
-        </div>
-        <div className="font-mono text-xs text-muted-foreground">
-          (Press <kbd>d</kbd> to toggle dark mode)
-        </div>
+    <main className="flex h-svh w-screen overflow-hidden bg-black">
+      <div className="h-full min-w-0 grow">
+        <VideoPlayer
+          src={currentItem?.url ?? null}
+          onEnded={playNext}
+          onNext={playNext}
+          onPrev={playPrev}
+        />
       </div>
-    </div>
+      <div className="h-full w-[28rem] shrink-0">
+        <Playlist
+          items={playlistItems}
+          setItems={setPlaylistItems}
+          onItemClick={handleItemClick}
+          onRemoveItem={handleRemoveItem}
+          currentItemId={currentItem?.id ?? null}
+        />
+      </div>
+    </main>
   )
 }

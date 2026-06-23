@@ -1,0 +1,13 @@
+<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Play glyph: Vidstack Media Icons / MIT License https://github.com/vidstack/icons -->
+  <rect width="128" height="128" rx="30" fill="url(#bg)"/>
+  <circle cx="64" cy="64" r="42" fill="black" fill-opacity="0.28"/>
+  <path d="M48 34.6192C48 32.1552 50.8023 30.7411 52.7828 32.204L109.697 74.5853C111.32 75.7838 111.32 78.2114 109.697 79.4106L52.7828 121.796C50.8027 123.259 48 121.845 48 119.381V34.6192Z" transform="scale(0.68) translate(24 21)" fill="white"/>
+  <defs>
+    <linearGradient id="bg" x1="18" y1="12" x2="112" y2="122" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FACC15"/>
+      <stop offset="0.52" stop-color="#FB923C"/>
+      <stop offset="1" stop-color="#7C3AED"/>
+    </linearGradient>
+  </defs>
+</svg>

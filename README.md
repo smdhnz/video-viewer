@@ -1,21 +1,35 @@
-# Next.js template
+# ビデオビューア
 
-This is a Next.js template with shadcn/ui.
+ローカル動画と動画URL（HLS `.m3u8` 含む）をプレイリストで再生できるシンプルな動画再生アプリです。
 
-## Adding components
+## 機能
 
-To add components to your app, run the following command:
+- 動画ファイルのドラッグ＆ドロップ追加
+- 動画URL / HLS URLの追加
+- `public.ynjn.jp` 用プロキシ rewrite
+- プレイリストの並び替え、選択、削除
+- サムネイル・再生時間の自動取得
+- 再生 / 一時停止、シーク、音量、ミュート
+- フルスクリーン、90度回転
+- 前後の動画へ移動、自動で次を再生
+
+## ショートカット
+
+| キー          | 機能            |
+| ------------- | --------------- |
+| `Space` / `k` | 再生 / 一時停止 |
+| `f`           | フルスクリーン  |
+| `m`           | ミュート        |
+| `↑` / `↓`     | 音量変更        |
+| `→` / `l`     | 5秒進む         |
+| `←` / `h`     | 5秒戻る         |
+| `r`           | 90度回転        |
+| `n`           | 次の動画        |
+| `p`           | 前の動画        |
+
+## 開発
 
 ```bash
-npx shadcn@latest add button
-```
-
-This will place the ui components in the `components` directory.
-
-## Using components
-
-To use the components in your app, import them as follows:
-
-```tsx
-import { Button } from "@/components/ui/button";
+bun install
+bun dev
 ```
