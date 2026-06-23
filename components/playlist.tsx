@@ -17,7 +17,7 @@ import {
   useSortable,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable"
-import { Film, GripVertical, Link, Plus, Trash2 } from "lucide-react"
+import { Film, GripVertical, Link, Plus, Trash2, Upload } from "lucide-react"
 import Image from "next/image"
 import {
   useRef,
@@ -271,15 +271,31 @@ export function Playlist({
       </div>
 
       <form onSubmit={handleAddUrl} className="mb-4 flex gap-2">
-        <input
-          type="text"
-          placeholder="m3u8 / video URL"
-          className="h-11 min-w-0 grow rounded-2xl border border-white/10 bg-white/[0.06] px-4 text-sm text-zinc-50 transition outline-none placeholder:text-zinc-500 focus:border-primary/60 focus:ring-2 focus:ring-primary/20"
-          value={urlInput}
-          onChange={(event) => setUrlInput(event.target.value)}
-        />
-        <Button type="submit" size="icon" className="h-11 w-11 rounded-2xl">
-          <Plus size={20} />
+        <div className="relative min-w-0 grow">
+          <input
+            type="text"
+            placeholder="m3u8 / video URL"
+            className="h-11 w-full rounded-2xl border border-white/10 bg-white/[0.06] pr-12 pl-4 text-sm text-zinc-50 transition outline-none placeholder:text-zinc-500 focus:border-primary/60 focus:ring-2 focus:ring-primary/20"
+            value={urlInput}
+            onChange={(event) => setUrlInput(event.target.value)}
+          />
+          <Button
+            type="submit"
+            size="icon"
+            className="absolute top-1/2 right-1 h-9 w-9 -translate-y-1/2 rounded-xl"
+            aria-label="URLを追加"
+          >
+            <Plus size={18} />
+          </Button>
+        </div>
+        <Button
+          type="button"
+          size="icon"
+          className="h-11 w-11 rounded-2xl"
+          onClick={() => fileInputRef.current?.click()}
+          aria-label="動画ファイルを選択"
+        >
+          <Upload size={20} />
         </Button>
       </form>
 
@@ -315,17 +331,13 @@ export function Playlist({
             </SortableContext>
           </DndContext>
         ) : (
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            className="flex h-full min-h-80 w-full items-center justify-center rounded-3xl border border-dashed border-white/15 bg-white/[0.03] p-6 text-center transition hover:border-primary/50 hover:bg-white/[0.06] focus:ring-2 focus:ring-primary/40 focus:outline-none"
-          >
+          <div className="flex h-full min-h-80 items-center justify-center rounded-3xl border border-dashed border-white/15 bg-white/[0.03] p-6 text-center">
             <p className="text-sm leading-7 text-zinc-400">
-              クリックして動画ファイルを選択
+              動画ファイルは上のボタンから選択
               <br />
               またはドラッグ＆ドロップ / URLを貼り付け
             </p>
-          </button>
+          </div>
         )}
       </div>
     </aside>
