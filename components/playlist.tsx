@@ -19,7 +19,13 @@ import {
 } from "@dnd-kit/sortable"
 import { Film, GripVertical, Link, Plus, Trash2 } from "lucide-react"
 import Image from "next/image"
-import { useState, type FormEvent, type MouseEvent } from "react"
+import {
+  useRef,
+  useState,
+  type ChangeEvent,
+  type FormEvent,
+  type MouseEvent,
+} from "react"
 
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -170,6 +176,7 @@ export function Playlist({
   onRemoveItem,
   currentItemId,
 }: PlaylistProps) {
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const [urlInput, setUrlInput] = useState("")
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -212,9 +219,8 @@ export function Playlist({
     })
   }
 
-  const handleDrop = async (event: React.DragEvent<HTMLDivElement>) => {
-    event.preventDefault()
-    const files = Array.from(event.dataTransfer.files).filter((file) =>
+  const addVideoFiles = async (fileList: FileList | File[]) => {
+    const files = Array.from(fileList).filter((file) =>
       file.type.startsWith("video/")
     )
 
@@ -237,6 +243,18 @@ export function Playlist({
     )
 
     setItems((prevItems) => [...prevItems, ...newItems])
+  }
+
+  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files) {
+      void addVideoFiles(event.target.files)
+    }
+    event.target.value = ""
+  }
+
+  const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault()
+    void addVideoFiles(event.dataTransfer.files)
   }
 
   return (
@@ -265,6 +283,15 @@ export function Playlist({
         </Button>
       </form>
 
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="video/*"
+        multiple
+        className="hidden"
+        onChange={handleFileChange}
+      />
+
       <div className="min-h-0 grow overflow-y-auto pr-1">
         {items.length > 0 ? (
           <DndContext
@@ -288,13 +315,17 @@ export function Playlist({
             </SortableContext>
           </DndContext>
         ) : (
-          <div className="flex h-full min-h-80 items-center justify-center rounded-3xl border border-dashed border-white/15 bg-white/[0.03] p-6 text-center">
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="flex h-full min-h-80 w-full items-center justify-center rounded-3xl border border-dashed border-white/15 bg-white/[0.03] p-6 text-center transition hover:border-primary/50 hover:bg-white/[0.06] focus:ring-2 focus:ring-primary/40 focus:outline-none"
+          >
             <p className="text-sm leading-7 text-zinc-400">
-              動画ファイルをドラッグ＆ドロップ
+              クリックして動画ファイルを選択
               <br />
-              またはURLを貼り付け
+              またはドラッグ＆ドロップ / URLを貼り付け
             </p>
-          </div>
+          </button>
         )}
       </div>
     </aside>
