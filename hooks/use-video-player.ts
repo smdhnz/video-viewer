@@ -8,13 +8,14 @@ type VideoPlayerState = {
   volume: number
   currentTime: number
   duration: number
-  rotation: number
   isFullScreen: boolean
 }
 
 export function useVideoPlayer(
   videoContainerRef: React.RefObject<HTMLDivElement | null>,
-  src: string | null
+  src: string | null,
+  rotation: number,
+  onRotationChange: (rotation: number) => void
 ) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const hlsRef = useRef<Hls | null>(null)
@@ -24,7 +25,6 @@ export function useVideoPlayer(
     volume: 0,
     currentTime: 0,
     duration: 0,
-    rotation: 0,
     isFullScreen: false,
   })
 
@@ -59,6 +59,10 @@ export function useVideoPlayer(
     }))
   }, [])
 
+  const handlePlaybackEnded = useCallback(() => {
+    setPlayerState((prevState) => ({ ...prevState, isPlaying: false }))
+  }, [])
+
   const handleSeek = useCallback((time: number) => {
     const video = videoRef.current
     if (!video) return
@@ -69,11 +73,8 @@ export function useVideoPlayer(
   }, [])
 
   const toggleRotation = useCallback(() => {
-    setPlayerState((prevState) => ({
-      ...prevState,
-      rotation: (prevState.rotation + 90) % 360,
-    }))
-  }, [])
+    onRotationChange((rotation + 90) % 360)
+  }, [onRotationChange, rotation])
 
   const toggleFullScreen = useCallback(() => {
     const container = videoContainerRef.current
@@ -260,8 +261,10 @@ export function useVideoPlayer(
           toggleFullScreen()
           break
         case "r":
-          event.preventDefault()
-          toggleRotation()
+          if (!event.shiftKey) {
+            event.preventDefault()
+            toggleRotation()
+          }
           break
       }
     },
@@ -291,5 +294,6 @@ export function useVideoPlayer(
     toggleFullScreen,
     handleTimeUpdate,
     handleDurationChange,
+    handlePlaybackEnded,
   }
 }

@@ -5,6 +5,8 @@ import {
   Minimize,
   Pause,
   Play,
+  Repeat,
+  Repeat1,
   RotateCcw,
   SkipBack,
   SkipForward,
@@ -13,15 +15,29 @@ import {
 } from "lucide-react"
 import { useEffect, useRef, useState, type PointerEvent } from "react"
 
+import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
 import { useVideoPlayer } from "@/hooks/use-video-player"
 import { cn } from "@/lib/utils"
 
+export type RepeatMode = "none" | "playlist" | "one"
+
 type VideoPlayerProps = {
   src: string | null
+  rotation: number
+  repeatMode: RepeatMode
+  loop: boolean
   onEnded: () => void
   onNext: () => void
   onPrev: () => void
+  onRepeatModeChange: () => void
+  onRotationChange: (rotation: number) => void
+}
+
+const repeatModeLabels: Record<RepeatMode, string> = {
+  none: "繰り返しなし",
+  playlist: "Playlist繰り返し",
+  one: "1動画繰り返し",
 }
 
 const formatTime = (time: number) => {
@@ -34,9 +50,14 @@ const formatTime = (time: number) => {
 
 export function VideoPlayer({
   src,
+  rotation,
+  repeatMode,
+  loop,
   onEnded,
   onNext,
   onPrev,
+  onRepeatModeChange,
+  onRotationChange,
 }: VideoPlayerProps) {
   const videoContainerRef = useRef<HTMLDivElement>(null)
   const [isHovering, setIsHovering] = useState(false)
@@ -50,7 +71,8 @@ export function VideoPlayer({
     toggleFullScreen,
     handleTimeUpdate,
     handleDurationChange,
-  } = useVideoPlayer(videoContainerRef, src)
+    handlePlaybackEnded,
+  } = useVideoPlayer(videoContainerRef, src, rotation, onRotationChange)
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -68,6 +90,12 @@ export function VideoPlayer({
           event.preventDefault()
           onPrev()
           break
+        case "r":
+          if (event.shiftKey) {
+            event.preventDefault()
+            onRepeatModeChange()
+          }
+          break
       }
     }
 
@@ -75,7 +103,7 @@ export function VideoPlayer({
     return () => {
       window.removeEventListener("keydown", handleKeyDown)
     }
-  }, [onNext, onPrev])
+  }, [onNext, onPrev, onRepeatModeChange])
 
   const handlePointerUp = (event: PointerEvent<HTMLDivElement>) => {
     const target = event.target as HTMLElement
@@ -102,15 +130,19 @@ export function VideoPlayer({
           className="absolute object-contain"
           onTimeUpdate={handleTimeUpdate}
           onDurationChange={handleDurationChange}
-          onEnded={onEnded}
+          onEnded={() => {
+            handlePlaybackEnded()
+            onEnded()
+          }}
           onClick={togglePlay}
           muted={playerState.volume === 0}
+          loop={loop}
           style={{
             top: "50%",
             left: "50%",
-            transform: `translate(-50%, -50%) rotate(${playerState.rotation}deg)`,
-            width: playerState.rotation % 180 !== 0 ? "100vh" : "100vw",
-            height: playerState.rotation % 180 !== 0 ? "100vw" : "100vh",
+            transform: `translate(-50%, -50%) rotate(${rotation}deg)`,
+            width: rotation % 180 !== 0 ? "100vh" : "100vw",
+            height: rotation % 180 !== 0 ? "100vw" : "100vh",
           }}
         />
       ) : (
@@ -207,6 +239,21 @@ export function VideoPlayer({
             </div>
 
             <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={onRepeatModeChange}
+                className="rounded-full"
+                aria-label={`${repeatModeLabels[repeatMode]}。切り替え`}
+                title="繰り返し切り替え (Shift+R)"
+              >
+                {repeatMode === "one" ? (
+                  <Repeat1 data-icon="inline-start" />
+                ) : (
+                  <Repeat data-icon="inline-start" />
+                )}
+                {repeatModeLabels[repeatMode]}
+              </Button>
               <button
                 type="button"
                 onClick={toggleRotation}

@@ -3,12 +3,14 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 
 import { Playlist } from "@/components/playlist"
-import { VideoPlayer } from "@/components/video-player"
+import { VideoPlayer, type RepeatMode } from "@/components/video-player"
 import type { PlaylistItem } from "@/types/playlist"
 
 export default function Page() {
   const [playlistItems, setPlaylistItems] = useState<PlaylistItem[]>([])
   const [currentItem, setCurrentItem] = useState<PlaylistItem | null>(null)
+  const [repeatMode, setRepeatMode] = useState<RepeatMode>("none")
+  const [rotations, setRotations] = useState<Record<string, number>>({})
   const playlistItemsRef = useRef(playlistItems)
   const prevPlaylistLengthRef = useRef(playlistItems.length)
 
@@ -77,6 +79,27 @@ export default function Page() {
     setCurrentItem(playlistItems[prevIndex] ?? null)
   }, [currentItem?.id, playlistItems])
 
+  const handleEnded = useCallback(() => {
+    if (repeatMode === "playlist") playNext()
+  }, [playNext, repeatMode])
+
+  const toggleRepeatMode = useCallback(() => {
+    setRepeatMode((mode) =>
+      mode === "none" ? "playlist" : mode === "playlist" ? "one" : "none"
+    )
+  }, [])
+
+  const handleRotationChange = useCallback(
+    (rotation: number) => {
+      if (!currentItem) return
+      setRotations((current) => ({
+        ...current,
+        [currentItem.id]: rotation,
+      }))
+    },
+    [currentItem]
+  )
+
   useEffect(() => {
     const prevLength = prevPlaylistLengthRef.current
     if (prevLength === 0 && playlistItems.length > 0) {
@@ -90,9 +113,17 @@ export default function Page() {
       <div className="h-full min-w-0 grow">
         <VideoPlayer
           src={currentItem?.url ?? null}
-          onEnded={playNext}
+          rotation={currentItem ? (rotations[currentItem.id] ?? 0) : 0}
+          repeatMode={repeatMode}
+          loop={
+            repeatMode === "one" ||
+            (repeatMode === "playlist" && playlistItems.length === 1)
+          }
+          onEnded={handleEnded}
           onNext={playNext}
           onPrev={playPrev}
+          onRepeatModeChange={toggleRepeatMode}
+          onRotationChange={handleRotationChange}
         />
       </div>
       <div className="h-full w-[28rem] shrink-0">
