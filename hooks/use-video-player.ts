@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import Hls from "hls.js"
 
+const FRAME_DURATION_SECONDS = 1 / 30
+
 type VideoPlayerState = {
   isPlaying: boolean
   volume: number
@@ -20,6 +22,7 @@ export function useVideoPlayer(
   const videoRef = useRef<HTMLVideoElement>(null)
   const hlsRef = useRef<Hls | null>(null)
   const lastSrcRef = useRef<string | null>(null)
+  const isSpacePressedRef = useRef(false)
   const [playerState, setPlayerState] = useState<VideoPlayerState>({
     isPlaying: false,
     volume: 0,
@@ -219,9 +222,14 @@ export function useVideoPlayer(
         return
       }
 
+      if (event.code === "Space") {
+        event.preventDefault()
+        isSpacePressedRef.current = true
+        return
+      }
+
       switch (key) {
         case "k":
-        case " ":
           event.preventDefault()
           togglePlay()
           break
@@ -247,14 +255,26 @@ export function useVideoPlayer(
           }))
           break
         case "l":
+          event.preventDefault()
+          handleSeek(
+            (videoRef.current?.currentTime ?? 0) +
+              (isSpacePressedRef.current ? FRAME_DURATION_SECONDS : 5)
+          )
+          break
         case "arrowright":
           event.preventDefault()
-          handleSeek(playerState.currentTime + 5)
+          handleSeek((videoRef.current?.currentTime ?? 0) + 5)
           break
         case "h":
+          event.preventDefault()
+          handleSeek(
+            (videoRef.current?.currentTime ?? 0) -
+              (isSpacePressedRef.current ? FRAME_DURATION_SECONDS : 5)
+          )
+          break
         case "arrowleft":
           event.preventDefault()
-          handleSeek(playerState.currentTime - 5)
+          handleSeek((videoRef.current?.currentTime ?? 0) - 5)
           break
         case "f":
           event.preventDefault()
@@ -268,19 +288,24 @@ export function useVideoPlayer(
           break
       }
     },
-    [
-      handleSeek,
-      playerState.currentTime,
-      toggleFullScreen,
-      togglePlay,
-      toggleRotation,
-    ]
+    [handleSeek, toggleFullScreen, togglePlay, toggleRotation]
   )
 
   useEffect(() => {
+    const handleKeyUp = (event: KeyboardEvent) => {
+      if (event.code === "Space") isSpacePressedRef.current = false
+    }
+    const handleBlur = () => {
+      isSpacePressedRef.current = false
+    }
+
     window.addEventListener("keydown", handleKeyDown)
+    window.addEventListener("keyup", handleKeyUp)
+    window.addEventListener("blur", handleBlur)
     return () => {
       window.removeEventListener("keydown", handleKeyDown)
+      window.removeEventListener("keyup", handleKeyUp)
+      window.removeEventListener("blur", handleBlur)
     }
   }, [handleKeyDown])
 
